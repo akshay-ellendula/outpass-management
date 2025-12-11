@@ -1,5 +1,5 @@
 import Security from '../models/securityModel.js';
-import Student from '../models/StudentModel.js';
+import Student from '../models/studentModel.js';
 
 // @desc    Create a new Student
 // @route   POST /api/warden/create-student
@@ -23,6 +23,7 @@ export const createStudent = async (req, res) => {
             regNo, name, email, password, phone,
             hostelBlock, roomNo, parentName, parentEmail, parentPhone,
             role: 'student'
+            
         });
 
         res.status(201).json({

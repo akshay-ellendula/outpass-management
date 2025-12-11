@@ -22,7 +22,9 @@ const studentSchema = new mongoose.Schema({
     parentPhone: { type: String, required: true },
     
     isDefaulter: { type: Boolean, default: false },
-    role: { type: String, default: 'student' }
+    role: { type: String, default: 'student' },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date
 }, { timestamps: true });
 
 // Hash Password Pre-save
