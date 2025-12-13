@@ -14,7 +14,6 @@ const securitySchema = new mongoose.Schema({
     
     // Security Specifics
     gateLocation: { type: String, required: true },
-    role: { type: String, default: 'security' }
 }, { timestamps: true });
 
 securitySchema.pre("save", async function (next) {

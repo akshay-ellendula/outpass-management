@@ -16,7 +16,6 @@ const wardenSchema = new mongoose.Schema({
     
     // Warden Specifics
     assignedBlock: { type: String, required: true },
-    role: { type: String, default: 'warden' },
     resetPasswordToken: String,
     resetPasswordExpire: Date
 }, { timestamps: true });
