@@ -20,33 +20,21 @@
             <span class="font-bold text-lg text-slate-800 tracking-wide">Admin Panel</span>
         </div>
         <nav class="flex-1 overflow-y-auto py-4 space-y-1">
-            <a href="admin-dashboard.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
-                <i class="ph-bold ph-squares-four text-xl"></i><span class="font-medium text-sm">Dashboard</span>
-            </a>
+            <a href="admin-dashboard.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"><i class="ph-bold ph-squares-four text-xl"></i><span class="font-medium text-sm">Dashboard</span></a>
             <p class="px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mt-4">User Management</p>
-            <a href="admin-wardens.html" class="nav-item active w-full flex items-center gap-3 px-6 py-3 transition">
-                <i class="ph-bold ph-user-gear text-xl"></i><span class="font-medium text-sm">Wardens</span>
-            </a>
-            <a href="admin-guards.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
-                <i class="ph-bold ph-police-car text-xl"></i><span class="font-medium text-sm">Security Guards</span>
-            </a>
-            <a href="admin-students.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
-                <i class="ph-bold ph-student text-xl"></i><span class="font-medium text-sm">Students</span>
-            </a>
+            <a href="admin-wardens.html" class="nav-item active w-full flex items-center gap-3 px-6 py-3 transition"><i class="ph-bold ph-user-gear text-xl"></i><span class="font-medium text-sm">Wardens</span></a>
+            <a href="admin-guards.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"><i class="ph-bold ph-police-car text-xl"></i><span class="font-medium text-sm">Security Guards</span></a>
+            <a href="admin-students.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"><i class="ph-bold ph-student text-xl"></i><span class="font-medium text-sm">Students</span></a>
             <p class="px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mt-4">Configuration</p>
-            <a href="admin-reports.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
-                <i class="ph-bold ph-chart-bar text-xl"></i><span class="font-medium text-sm">Reports</span>
-            </a>
-            <a href="admin-settings.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition">
-                <i class="ph-bold ph-sliders text-xl"></i><span class="font-medium text-sm">Global Settings</span>
-            </a>
+            <a href="admin-reports.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"><i class="ph-bold ph-chart-bar text-xl"></i><span class="font-medium text-sm">Reports</span></a>
+            <a href="admin-settings.html" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition"><i class="ph-bold ph-sliders text-xl"></i><span class="font-medium text-sm">Global Settings</span></a>
         </nav>
         <div class="p-4 border-t border-slate-100">
-            <div class="flex items-center gap-3 mb-4 px-2">
+            <div class="flex items-center gap-3 px-2">
                 <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs border border-blue-200">AD</div>
                 <div><p class="text-sm font-bold text-slate-800">Administrator</p><p class="text-[10px] text-slate-500 uppercase">Super Admin</p></div>
             </div>
-            <button onclick="alert('Signed out')" class="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-lg transition text-sm font-medium">
+            <button onclick="alert('Signed out')" class="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-red-600 hover:bg-red-50 py-2 rounded-lg transition text-sm font-medium mt-3">
                 <i class="ph-bold ph-sign-out"></i> Sign Out
             </button>
         </div>
@@ -64,9 +52,10 @@
                     <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
                     <input type="text" placeholder="Search warden..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full focus:outline-none focus:border-blue-500">
                 </div>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-sm">
+                
+                <a href="admin-add-warden.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-sm">
                     <i class="ph-bold ph-plus"></i> Add Warden
-                </button>
+                </a>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

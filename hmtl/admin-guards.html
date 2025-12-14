@@ -48,13 +48,10 @@
 
         <div class="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50">
             <div class="flex justify-between items-center mb-6">
-                <div class="relative w-64">
+                <div class="relative w-full max-w-md">
                     <i class="ph-bold ph-magnifying-glass absolute left-3 top-2.5 text-slate-400"></i>
                     <input type="text" placeholder="Search guard..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm w-full focus:outline-none focus:border-blue-500">
                 </div>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition shadow-sm">
-                    <i class="ph-bold ph-plus"></i> Add Guard
-                </button>
             </div>
 
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -65,8 +62,7 @@
                             <th class="px-6 py-4">Guard ID</th>
                             <th class="px-6 py-4">Location</th>
                             <th class="px-6 py-4">Shift</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
+                            <th class="px-6 py-4 text-right">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-slate-700">
@@ -75,24 +71,14 @@
                             <td class="px-6 py-4 font-mono text-slate-500">SEC-001</td>
                             <td class="px-6 py-4">Gate 1 (Main)</td>
                             <td class="px-6 py-4">Day (8AM-8PM)</td>
-                            <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Active</span></td>
-                            <td class="px-6 py-4 text-right">
-                                <button class="text-blue-600 hover:text-blue-800 font-bold text-xs">Edit</button>
-                                <span class="text-slate-300 mx-2">|</span>
-                                <button class="text-red-600 hover:text-red-800 font-bold text-xs">Remove</button>
-                            </td>
+                            <td class="px-6 py-4 text-right"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">Active</span></td>
                         </tr>
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-6 py-4 font-bold text-slate-900">Suresh Kumar</td>
                             <td class="px-6 py-4 font-mono text-slate-500">SEC-002</td>
                             <td class="px-6 py-4">Gate 2 (Back)</td>
                             <td class="px-6 py-4">Night (8PM-8AM)</td>
-                            <td class="px-6 py-4"><span class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold">Off Duty</span></td>
-                            <td class="px-6 py-4 text-right">
-                                <button class="text-blue-600 hover:text-blue-800 font-bold text-xs">Edit</button>
-                                <span class="text-slate-300 mx-2">|</span>
-                                <button class="text-red-600 hover:text-red-800 font-bold text-xs">Remove</button>
-                            </td>
+                            <td class="px-6 py-4 text-right"><span class="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold">Off Duty</span></td>
                         </tr>
                     </tbody>
                 </table>
