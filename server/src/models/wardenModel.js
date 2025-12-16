@@ -1,26 +1,19 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from 'crypto';
 
 const wardenSchema = new mongoose.Schema({
-    empId: {
-        type: String,
-        required: true,
-        unique: true,
-        uppercase: true,
-        trim: true
-    },
+    empId: { type: String, required: true, unique: true, uppercase: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String, required: true },
-    
-    // Warden Specifics
     assignedBlock: { type: String, required: true },
+    isActive: { type: Boolean, default: true },
     resetPasswordToken: String,
     resetPasswordExpire: Date
 }, { timestamps: true });
 
-// Hash Password Pre-save
 wardenSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
     const salt = await bcrypt.genSalt(10);
@@ -28,11 +21,16 @@ wardenSchema.pre("save", async function (next) {
     next();
 });
 
-// Compare Password Method
 wardenSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// CRITICAL: Model name MUST be "Warden" (This was your error)
+wardenSchema.methods.getResetPasswordToken = function () {
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    return resetToken;
+};
+
 const Warden = mongoose.model("Warden", wardenSchema);
 export default Warden;

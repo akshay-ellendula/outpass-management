@@ -2,18 +2,12 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 const securitySchema = new mongoose.Schema({
-    guardId: {
-        type: String,
-        required: true,
-        unique: true,
-        uppercase: true,
-        trim: true
-    },
+    guardId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     password: { type: String, required: true },
-    
-    // Security Specifics
     gateLocation: { type: String, required: true },
+    shift: { type: String, enum: ['Day', 'Night'], default: 'Day' },
+    isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
 securitySchema.pre("save", async function (next) {
@@ -27,6 +21,5 @@ securitySchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// CRITICAL: Model name MUST be "Security"
 const Security = mongoose.model("Security", securitySchema);
 export default Security;

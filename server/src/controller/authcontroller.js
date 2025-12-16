@@ -222,3 +222,71 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+import jwt from 'jsonwebtoken';
+import Warden from '../models/wardenModel.js';
+import Security from '../models/securityModel.js';
+import Admin from '../models/adminModel.js';
+import Student from '../models/studentModel.js';
+import crypto from 'crypto';
+import sendEmail from '../utils/sendEmail.js';
+
+// Helper: Generate Token
+const generateTokenAndCookie = (res, userId, role) => {
+    const token = jwt.sign({ id: userId, role }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
+    res.cookie('jwt', token, {
+        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === 'production'
+    });
+};
+
+// Generic Login Handler
+const loginUser = async (res, Model, identifier, password, role) => {
+    const user = await Model.findOne(identifier);
+    if (!user || !(await user.matchPassword(password))) {
+        return res.status(401).json({ message: "Invalid credentials" });
+    }
+    if (user.isActive === false) {
+        return res.status(403).json({ message: "Account is inactive." });
+    }
+    generateTokenAndCookie(res, user._id, role);
+    const userData = { id: user._id, name: user.name, role: role };
+    // Add specific fields if needed
+    if (role === 'student') userData.regNo = user.regNo;
+    if (role === 'warden') userData.block = user.assignedBlock;
+    
+    res.status(200).json({ success: true, user: userData });
+};
+
+export const studentSignin = async (req, res) => {
+    const { regNo, password } = req.body;
+    try { await loginUser(res, Student, { regNo }, password, 'student'); } 
+    catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+export const wardenSignin = async (req, res) => {
+    const { empId, password } = req.body;
+    try { await loginUser(res, Warden, { empId }, password, 'warden'); } 
+    catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+export const securitySignin = async (req, res) => {
+    const { guardId, password } = req.body;
+    try { await loginUser(res, Security, { guardId }, password, 'security'); } 
+    catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+export const adminSignin = async (req, res) => {
+    const { username, password } = req.body;
+    try { await loginUser(res, Admin, { username }, password, 'admin'); } 
+    catch (e) { res.status(500).json({ message: e.message }); }
+};
+
+export const logout = (req, res) => {
+    res.clearCookie("jwt");
+    res.status(200).json({ success: true, message: "Logged out" });
+};
+
+// ... Include Admin Signup & Forgot Password logic here (as previously defined)

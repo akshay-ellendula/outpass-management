@@ -1,32 +1,29 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import crypto from 'crypto';
 
 const studentSchema = new mongoose.Schema({
-    regNo: {
-        type: String,
-        required: true,
-        unique: true,
-        uppercase: true,
-        trim: true
-    },
+    regNo: { type: String, required: true, unique: true, uppercase: true, trim: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: { type: String, required: true },
     
-    // Student Specifics
+    // Hostel & Guardian
     hostelBlock: { type: String, required: true },
     roomNo: { type: String, required: true },
     parentName: { type: String, required: true },
     parentEmail: { type: String, required: true },
     parentPhone: { type: String, required: true },
     
+    // Logic Flags
     isDefaulter: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
+    
     resetPasswordToken: String,
     resetPasswordExpire: Date
 }, { timestamps: true });
 
-// Hash Password Pre-save
 studentSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
     const salt = await bcrypt.genSalt(10);
@@ -34,11 +31,16 @@ studentSchema.pre("save", async function (next) {
     next();
 });
 
-// Compare Password Method
 studentSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// CRITICAL: Model name is "Student"
+studentSchema.methods.getResetPasswordToken = function () {
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    return resetToken;
+};
+
 const Student = mongoose.model("Student", studentSchema);
 export default Student;
