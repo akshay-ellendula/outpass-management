@@ -1,292 +1,294 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
 import Warden from '../models/wardenModel.js';
 import Security from '../models/securityModel.js';
 import Admin from '../models/adminModel.js';
 import Student from '../models/studentModel.js';
-import crypto from 'crypto'; // Built-in Node module
+
 import sendEmail from '../utils/sendEmail.js';
 
-// ==========================================
-// 1. LOGIN CONTROLLERS (Keep these)
-// ==========================================
+/* =====================================================
+   1. LOGIN CONTROLLERS
+===================================================== */
 
-// @desc    Signin for Student
+// Student Signin
 export const studentSignin = async (req, res) => {
     const { regNo, password } = req.body;
+
     try {
         const student = await Student.findOne({ regNo });
+
         if (!student || !(await student.matchPassword(password))) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
+
         generateTokenAndCookie(res, student._id, 'student');
-        res.status(200).json({ success: true, user: { id: student._id, name: student.name, role: 'student' } });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: student._id,
+                name: student.name,
+                role: 'student'
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// @desc    Signin for Warden
+// Warden Signin
 export const wardenSignin = async (req, res) => {
     const { empId, password } = req.body;
+
     try {
         const warden = await Warden.findOne({ empId });
+
         if (!warden || !(await warden.matchPassword(password))) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
+
         generateTokenAndCookie(res, warden._id, 'warden');
-        res.status(200).json({ success: true, user: { id: warden._id, name: warden.name, role: 'warden' } });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: warden._id,
+                name: warden.name,
+                role: 'warden'
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// @desc    Signin for Security
+// Security Signin
 export const securitySignin = async (req, res) => {
     const { guardId, password } = req.body;
+
     try {
         const security = await Security.findOne({ guardId });
+
         if (!security || !(await security.matchPassword(password))) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
+
         generateTokenAndCookie(res, security._id, 'security');
-        res.status(200).json({ success: true, user: { id: security._id, role: 'security' } });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: security._id,
+                role: 'security'
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// @desc    Signin for Admin
+// Admin Signin
 export const adminSignin = async (req, res) => {
     const { username, password } = req.body;
+
     try {
         const admin = await Admin.findOne({ username });
+
         if (!admin || !(await admin.matchPassword(password))) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: 'Invalid credentials' });
         }
+
         generateTokenAndCookie(res, admin._id, 'admin');
-        res.status(200).json({ success: true, user: { id: admin._id, role: 'admin' } });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: admin._id,
+                role: 'admin'
+            }
+        });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// ==========================================
-// 2. SETUP CONTROLLER (Keep only for Admin)
-// ==========================================
+/* =====================================================
+   2. ADMIN SETUP (RUN ONCE)
+===================================================== */
 
-// @desc    Initial Admin Setup (Run once via Postman to create Super Admin)
 export const adminSignup = async (req, res) => {
     const { username, password } = req.body;
+
     try {
         const admin = await Admin.create({ username, password });
+
         generateTokenAndCookie(res, admin._id, 'admin');
-        res.status(201).json({ success: true, message: "Admin created" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+
+        res.status(201).json({
+            success: true,
+            message: 'Admin created successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
 
-// ==========================================
-// 3. UTILITY CONTROLLERS
-// ==========================================
+/* =====================================================
+   3. AUTH UTILITIES
+===================================================== */
 
+// Logout
 export const logout = (req, res) => {
-    res.clearCookie("jwt");
-    res.status(200).json({ success: true, message: "Logout successful" });
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production'
+    });
+
+    res.status(200).json({
+        success: true,
+        message: 'Logout successful'
+    });
 };
 
+// Verify Auth
 export const verifyAuth = async (req, res) => {
-    // ... (Keep your existing verifyAuth code here)
-    // It verifies the token and returns the user
-    // No changes needed logic-wise, just copy-paste your existing one
     try {
         const token = req.cookies.jwt;
-        if (!token) return res.status(200).json({ authenticated: false });
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        // ... (rest of logic)
-        res.status(200).json({ authenticated: true, user: decoded }); // simplified for brevity
-    } catch (e) {
+
+        if (!token) {
+            return res.status(200).json({ authenticated: false });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        res.status(200).json({
+            authenticated: true,
+            user: decoded
+        });
+    } catch (error) {
         res.status(200).json({ authenticated: false });
     }
 };
 
-// Helper
-const generateTokenAndCookie = (res, userId, role) => {
-    const token = jwt.sign({ id: userId, role }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
+// JWT Helper
+export const generateTokenAndCookie = (res, userId, role) => {
+    const token = jwt.sign(
+        { userId, role },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+
     res.cookie('jwt', token, {
-        maxAge: 24 * 60 * 60 * 1000,
         httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === 'production'
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 };
-// @desc    VForgot Password - Send Email
-// @route   POST /api/auth/forgotpassword
+
+/* =====================================================
+   4. FORGOT / RESET PASSWORD
+===================================================== */
+
+// Forgot Password
 export const forgotPassword = async (req, res) => {
-    const { email, role } = req.body; // User must specify role
+    const { email, role } = req.body;
 
     try {
         let user;
-        // 1. Find User based on Role
+
         if (role === 'student') {
             user = await Student.findOne({ email });
         } else if (role === 'warden') {
             user = await Warden.findOne({ email });
         } else {
-            return res.status(400).json({ message: "Invalid role specified" });
+            return res.status(400).json({ message: 'Invalid role specified' });
         }
 
         if (!user) {
-            return res.status(404).json({ message: "No user found with this email" });
+            return res.status(404).json({ message: 'No user found with this email' });
         }
 
-        // 2. Generate Reset Token
         const resetToken = crypto.randomBytes(20).toString('hex');
 
-        // 3. Hash token and save to database
         user.resetPasswordToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
 
-        // Set expire to 10 minutes
         user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
         await user.save({ validateBeforeSave: false });
 
-        // 4. Create Reset URL (Frontend URL)
-        // Assuming your React frontend runs on localhost:5173
         const resetUrl = `http://localhost:5173/resetpassword/${resetToken}`;
 
         try {
             await sendEmail({
                 email: user.email,
                 name: user.name,
-                subject: 'Password Reset Token - Smart Outpass',
+                subject: 'Password Reset - Smart Outpass',
                 resetUrl
             });
 
-            res.status(200).json({ success: true, message: "Email sent successfully" });
+            res.status(200).json({
+                success: true,
+                message: 'Reset email sent'
+            });
         } catch (error) {
-            // Rollback if email fails
             user.resetPasswordToken = undefined;
             user.resetPasswordExpire = undefined;
-            await user.save({ validateBeforeSave: false });
-            return res.status(500).json({ message: "Email could not be sent" });
-        }
 
+            await user.save({ validateBeforeSave: false });
+
+            res.status(500).json({ message: 'Email could not be sent' });
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Reset Password
-// @route   PUT /api/auth/resetpassword/:resetToken
+// Reset Password
 export const resetPassword = async (req, res) => {
     const { password, role } = req.body;
     const { resetToken } = req.params;
 
     try {
-        // 1. Hash the token from URL to compare with DB
         const hashedToken = crypto
             .createHash('sha256')
             .update(resetToken)
             .digest('hex');
 
         let user;
-        const queryzk = {
+
+        const query = {
             resetPasswordToken: hashedToken,
-            resetPasswordExpire: { $gt: Date.now() } // Check expiry
+            resetPasswordExpire: { $gt: Date.now() }
         };
 
         if (role === 'student') {
-            user = await Student.findOne(queryzk);
+            user = await Student.findOne(query);
         } else if (role === 'warden') {
-            user = await Warden.findOne(queryzk);
+            user = await Warden.findOne(query);
         }
 
         if (!user) {
-            return res.status(400).json({ message: "Invalid or Expired Token" });
+            return res.status(400).json({ message: 'Invalid or expired token' });
         }
 
-        // 2. Set new password
-        user.password = password; // Pre-save hook in model will hash this
+        user.password = password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save();
 
-        res.status(200).json({ success: true, message: "Password updated successfully" });
-
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully'
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
-import jwt from 'jsonwebtoken';
-import Warden from '../models/wardenModel.js';
-import Security from '../models/securityModel.js';
-import Admin from '../models/adminModel.js';
-import Student from '../models/studentModel.js';
-import crypto from 'crypto';
-import sendEmail from '../utils/sendEmail.js';
-
-// Helper: Generate Token
-const generateTokenAndCookie = (res, userId, role) => {
-    const token = jwt.sign({ id: userId, role }, process.env.JWT_SECRET_KEY, { expiresIn: '1d' });
-    res.cookie('jwt', token, {
-        maxAge: 24 * 60 * 60 * 1000,
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === 'production'
-    });
-};
-
-// Generic Login Handler
-const loginUser = async (res, Model, identifier, password, role) => {
-    const user = await Model.findOne(identifier);
-    if (!user || !(await user.matchPassword(password))) {
-        return res.status(401).json({ message: "Invalid credentials" });
-    }
-    if (user.isActive === false) {
-        return res.status(403).json({ message: "Account is inactive." });
-    }
-    generateTokenAndCookie(res, user._id, role);
-    const userData = { id: user._id, name: user.name, role: role };
-    // Add specific fields if needed
-    if (role === 'student') userData.regNo = user.regNo;
-    if (role === 'warden') userData.block = user.assignedBlock;
-    
-    res.status(200).json({ success: true, user: userData });
-};
-
-export const studentSignin = async (req, res) => {
-    const { regNo, password } = req.body;
-    try { await loginUser(res, Student, { regNo }, password, 'student'); } 
-    catch (e) { res.status(500).json({ message: e.message }); }
-};
-
-export const wardenSignin = async (req, res) => {
-    const { empId, password } = req.body;
-    try { await loginUser(res, Warden, { empId }, password, 'warden'); } 
-    catch (e) { res.status(500).json({ message: e.message }); }
-};
-
-export const securitySignin = async (req, res) => {
-    const { guardId, password } = req.body;
-    try { await loginUser(res, Security, { guardId }, password, 'security'); } 
-    catch (e) { res.status(500).json({ message: e.message }); }
-};
-
-export const adminSignin = async (req, res) => {
-    const { username, password } = req.body;
-    try { await loginUser(res, Admin, { username }, password, 'admin'); } 
-    catch (e) { res.status(500).json({ message: e.message }); }
-};
-
-export const logout = (req, res) => {
-    res.clearCookie("jwt");
-    res.status(200).json({ success: true, message: "Logged out" });
-};
-
-// ... Include Admin Signup & Forgot Password logic here (as previously defined)
