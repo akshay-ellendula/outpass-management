@@ -9,6 +9,10 @@ const studentSchema = new mongoose.Schema({
     password: { type: String, required: true },
     phone: { type: String, required: true },
     
+    // Academic Info (Added)
+    year: { type: String, required: true, default: "1st Year" }, 
+    branch: { type: String, required: true, default: "General" },
+
     // Hostel & Guardian
     hostelBlock: { type: String, required: true },
     roomNo: { type: String, required: true },
@@ -24,11 +28,12 @@ const studentSchema = new mongoose.Schema({
     resetPasswordExpire: Date
 }, { timestamps: true });
 
-studentSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+studentSchema.pre("save", async function () { // Remove 'next' parameter
+    if (!this.isModified("password")) return; // Just return if not modified
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
+    // No need to call next()
 });
 
 studentSchema.methods.matchPassword = async function (enteredPassword) {

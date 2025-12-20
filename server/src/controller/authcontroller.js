@@ -40,8 +40,8 @@ export const studentSignin = async (req, res) => {
 
 // Warden Signin
 export const wardenSignin = async (req, res) => {
-    const { empId, password } = req.body;
-
+    const { wardenId : empId  , password } = req.body;
+    
     try {
         const warden = await Warden.findOne({ empId });
 
@@ -67,7 +67,6 @@ export const wardenSignin = async (req, res) => {
 // Security Signin
 export const securitySignin = async (req, res) => {
     const { guardId, password } = req.body;
-
     try {
         const security = await Security.findOne({ guardId });
 
@@ -92,7 +91,6 @@ export const securitySignin = async (req, res) => {
 // Admin Signin
 export const adminSignin = async (req, res) => {
     const { username, password } = req.body;
-
     try {
         const admin = await Admin.findOne({ username });
 

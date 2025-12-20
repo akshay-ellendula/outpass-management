@@ -8,11 +8,12 @@ const adminSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-adminSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+adminSchema.pre("save", async function () { // Remove 'next' parameter
+    if (!this.isModified("password")) return; // Just return if not modified
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
+    // No need to call next()
 });
 
 adminSchema.methods.matchPassword = async function (enteredPassword) {

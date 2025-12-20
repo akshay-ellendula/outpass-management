@@ -7,8 +7,8 @@ import { axiosInstance } from "../../lib/axios";
 
 const AdminLoginPage = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    masterKey: ""
+    username: "",
+    password: ""
   });
   const [showMasterKey, setShowMasterKey] = useState(false);
   const navigate = useNavigate();
@@ -132,8 +132,8 @@ const AdminLoginPage = () => {
                   </div>
                   <input
                     type="text"
-                    name="email"
-                    value={formData.email}
+                    name="username"
+                    value={formData.username}
                     onChange={handleChange}
                     className="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition sm:text-sm"
                     placeholder="admin@institute.edu"
@@ -165,8 +165,8 @@ const AdminLoginPage = () => {
                   </div>
                   <input
                     type={showMasterKey ? "text" : "password"}
-                    name="masterKey"
-                    value={formData.masterKey}
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
                     className="block w-full pl-10 pr-10 py-2.5 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition sm:text-sm"
                     placeholder="••••••••••••"

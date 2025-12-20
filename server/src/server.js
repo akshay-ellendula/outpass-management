@@ -10,6 +10,7 @@ import connect_Db from './config/config_db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import wardenRoutes from './routes/wardenRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
 
 
 const app = express();
@@ -26,9 +27,8 @@ app.use(cors({
 // --- MOUNT ROUTES ---
 app.use("/api/auth", authRoutes);       // Login/Logout/Forgot Password
 app.use("/api/admin", adminRoutes);     // Admin creating Wardens
-app.use("/api/warden", wardenRoutes);   // Warden creating Students/Guards      // Student Apply & Warden Approve
-     // Security Scanning
-
+app.use("/api/warden", wardenRoutes); 
+app.use("/api/student", studentRoutes);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server running at http://localhost:${port}`));

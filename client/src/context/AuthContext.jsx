@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { axiosInstance } from '../lib/axios'; // Make sure this path is correct
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await axiosInstance.post('/auth/logout');
       setUser(null);
-      // Optional: Refresh page to clear any local state artifacts
+      toast.success("Logged out successfully");
       window.location.href = '/'; 
     } catch (error) {
       console.error("Logout failed", error);

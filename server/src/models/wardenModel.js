@@ -14,11 +14,12 @@ const wardenSchema = new mongoose.Schema({
     resetPasswordExpire: Date
 }, { timestamps: true });
 
-wardenSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+wardenSchema.pre("save", async function () { // Remove 'next' parameter
+    if (!this.isModified("password")) return; // Just return if not modified
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
+    // No need to call next()
 });
 
 wardenSchema.methods.matchPassword = async function (enteredPassword) {

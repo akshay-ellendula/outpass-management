@@ -264,9 +264,9 @@ const HomePage = () => {
                 <div>
                     <h4 className="text-white font-semibold mb-4">Platform</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="#" className="hover:text-blue-400 transition">Student Login</a></li>
-                        <li><a href="#" className="hover:text-blue-400 transition">Warden Portal</a></li>
-                        <li><a href="#" class="hover:text-blue-400 transition">Security Gate</a></li>
+                        <li><a href="/login/student" className="hover:text-blue-400 transition">Student Login</a></li>
+                        <li><a href="/login/warden" className="hover:text-blue-400 transition">Warden Portal</a></li>
+                        <li><a href="/login/security" className="hover:text-blue-400 transition">Security Gate</a></li>
                     </ul>
                 </div>
                 <div>
