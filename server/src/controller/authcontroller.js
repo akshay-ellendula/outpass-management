@@ -180,13 +180,16 @@ export const generateTokenAndCookie = (res, userId, role) => {
         { expiresIn: '7d' }
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     res.cookie('jwt', token, {
         httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+        secure: isProduction,              // REQUIRED on Vercel
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
     });
 };
+
 
 /* =====================================================
    4. FORGOT / RESET PASSWORD
