@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router'; // Import Link for SPA navigation
 import { 
   ShieldCheck, 
   Menu, 
   X, 
   ArrowRight, 
-  Clock, 
   AlertTriangle, 
   UserCheck, 
   QrCode, 
@@ -37,10 +37,13 @@ const HomePage = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-slate-600 hover:text-blue-600 transition font-medium">Features</a>
               <a href="#workflow" className="text-slate-600 hover:text-blue-600 transition font-medium">How it Works</a>
-              <a href="#roles" className="text-slate-600 hover:text-blue-600 transition font-medium">For Wardens</a>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-blue-600/20">
-                Login Portal
-              </button>
+              
+              {/* Linked Login Button */}
+              <Link to="/login/student">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-medium transition shadow-lg shadow-blue-600/20">
+                  Login Portal
+                </button>
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -55,11 +58,11 @@ const HomePage = () => {
         {/* Mobile Dropdown */}
         {isMenuOpen && (
           <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-4 shadow-xl">
-             <a href="#features" onClick={toggleMenu} className="block text-slate-600 font-medium">Features</a>
-             <a href="#workflow" onClick={toggleMenu} className="block text-slate-600 font-medium">How it Works</a>
-             <button className="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
-               Login Portal
-             </button>
+              <a href="#features" onClick={toggleMenu} className="block text-slate-600 font-medium">Features</a>
+              <a href="#workflow" onClick={toggleMenu} className="block text-slate-600 font-medium">How it Works</a>
+              <Link to="/login/student" onClick={toggleMenu} className="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
+                Login Portal
+              </Link>
           </div>
         )}
       </nav>
@@ -68,7 +71,7 @@ const HomePage = () => {
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 px-4 py-1.5 rounded-full text-blue-700 font-medium text-sm mb-6">
-             Automated Defaulter Detection Live
+              Automated Defaulter Detection Live
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6 leading-tight">
@@ -83,17 +86,24 @@ const HomePage = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-semibold hover:bg-slate-800 transition shadow-xl hover:shadow-2xl hover:-translate-y-1 transform duration-200">
-                  Student Login 
-                  <ArrowRight className="w-5 h-5" />
-              </button>
-              <button className="flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-xl font-semibold hover:bg-slate-50 transition">
-                  Warden Dashboard
-              </button>
+              {/* Student Login Link */}
+              <Link to="/login/student">
+                <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-xl font-semibold hover:bg-slate-800 transition shadow-xl hover:shadow-2xl hover:-translate-y-1 transform duration-200">
+                    Student Login 
+                    <ArrowRight className="w-5 h-5" />
+                </button>
+              </Link>
+              
+              {/* Warden Login Link */}
+              <Link to="/login/warden">
+                <button className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-xl font-semibold hover:bg-slate-50 transition">
+                    Warden Dashboard
+                </button>
+              </Link>
           </div>
         </div>
 
-        {/* Dashboard Preview UI */}
+        {/* Dashboard Preview UI (Static Visuals) */}
         <div className="mt-16 relative">
           <div className="absolute inset-0 bg-linear-to-b from-blue-500/5 to-transparent rounded-3xl transform -skew-y-2"></div>
           
@@ -132,7 +142,7 @@ const HomePage = () => {
                         <div className="h-2 bg-slate-200 rounded w-3/4"></div>
                         <div className="h-2 bg-slate-200 rounded w-1/2"></div>
                         <div className="mt-4 text-xs text-slate-500 bg-white p-2 rounded border border-slate-200">
-                            Please contact Warden to clear status.
+                           Please contact Warden to clear status.
                         </div>
                      </div>
                   </div>
@@ -264,15 +274,17 @@ const HomePage = () => {
                 <div>
                     <h4 className="text-white font-semibold mb-4">Platform</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="/login/student" className="hover:text-blue-400 transition">Student Login</a></li>
-                        <li><a href="/login/warden" className="hover:text-blue-400 transition">Warden Portal</a></li>
-                        <li><a href="/login/security" className="hover:text-blue-400 transition">Security Gate</a></li>
+                        {/* Updated to use Link components pointing to actual routes */}
+                        <li><Link to="/login/student" className="hover:text-blue-400 transition">Student Login</Link></li>
+                        <li><Link to="/login/warden" className="hover:text-blue-400 transition">Warden Portal</Link></li>
+                        <li><Link to="/login/security" className="hover:text-blue-400 transition">Security Gate</Link></li>
+                        {/* Added Admin Login Link */}
+                        <li><Link to="/login/admin" className="hover:text-blue-400 transition text-blue-300">Admin Login</Link></li>
                     </ul>
                 </div>
                 <div>
                     <h4 className="text-white font-semibold mb-4">Support</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><a href="#" className="hover:text-blue-400 transition">Admin Contact</a></li>
                         <li><a href="#" className="hover:text-blue-400 transition">System Status</a></li>
                         <li><a href="#" className="hover:text-blue-400 transition">Report Bug</a></li>
                     </ul>
