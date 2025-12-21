@@ -3,7 +3,7 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 import {
     getStudentDashboard, getStudentProfile, applyDayPass,
     applyHomePass, getPassByToken,      // <--- Import
-    guardianPassAction,getPassDetails
+    guardianPassAction,getPassDetails,requestProfileUpdate,updateStudentPassword
 } from '../controller/studentController.js'; // Import the new function
 
 const router = express.Router();
@@ -17,10 +17,14 @@ router.get('/dashboard', protect, authorize('student'), getStudentDashboard);
 
 // NEW Profile Route
 router.get('/profile', protect, authorize('student'), getStudentProfile);
+router.put('/profile/password', protect, authorize('student'), updateStudentPassword); // <---
+
+router.post('/profile/update-request', protect, authorize('student'), requestProfileUpdate);
 
 // Pass Application Routes
 router.post('/apply/day', protect, authorize('student'), applyDayPass);
 router.post('/apply/home', protect, authorize('student'), applyHomePass);
 router.get('/pass/:id', protect, authorize('student'), getPassDetails);
+
 
 export default router;

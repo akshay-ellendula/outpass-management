@@ -56,14 +56,6 @@ const StudentApplyHomePass = () => {
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link to="/student/dashboard" className="bg-blue-600 p-2 rounded-lg text-white">
-            <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold text-slate-800">Apply Home Pass</h1>
-      </div>
-
       {/* Defaulter Banner */}
       {user?.isDefaulter && (
         <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex gap-3">

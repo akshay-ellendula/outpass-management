@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
 
 const gateLogSchema = new mongoose.Schema({
-    passId: { type: mongoose.Schema.Types.ObjectId, ref: "Pass", required: true },
+    // 1. Change required to false allow logging denied attempts
+    passId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: "DayPass", // Or 'HomePass', generic refs can be tricky in Mongoose without 'refPath'
+        required: false 
+    },
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
     guardId: { type: mongoose.Schema.Types.ObjectId, ref: "Security", required: true },
     

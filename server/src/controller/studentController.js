@@ -4,8 +4,98 @@ import Student from "../models/studentModel.js";
 import SystemConfig from "../models/systemConfigModel.js";
 import sendEmail from "../utils/sendEmail.js";
 import crypto from 'crypto';
+import ProfileUpdateRequest from "../models/profileUpdateRequestModel.js";
 
 // ... existing imports
+
+// @desc    Update Student Password
+// @route   PUT /api/student/profile/password
+// @access  Private (Student)
+export const updateStudentPassword = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const studentId = req.user._id;
+
+    // 1. Basic Validation
+    if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Password must be at least 6 characters long" 
+        });
+    }
+
+    // 2. Find Student
+    const student = await Student.findById(studentId);
+    if (!student) {
+        return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    // 3. Update Password
+    // The pre('save') hook in studentModel.js will automatically hash this
+    student.password = newPassword;
+    await student.save();
+
+    res.json({ success: true, message: "Password updated successfully" });
+
+  } catch (error) {
+    console.error("Password Update Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+// @desc    Request Profile Update
+// @route   POST /api/student/profile/update-request
+// @access  Private (Student)
+export const requestProfileUpdate = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const updates = req.body;
+
+    // 1. Check for existing pending request
+    const existingRequest = await ProfileUpdateRequest.findOne({ 
+        studentId, 
+        status: 'PENDING' 
+    });
+
+    if (existingRequest) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "You already have a pending update request. Please wait for approval." 
+        });
+    }
+
+    // 2. Define Allowed Fields
+    const allowedFields = [
+        'name', 'phone', 'email', 
+        'parentName', 'parentPhone', 'parentEmail', 
+        'roomNo', 'hostelBlock'
+    ];
+
+    // 3. Filter Updates (Remove disallowed or empty fields)
+    const filteredUpdates = {};
+    Object.keys(updates).forEach(key => {
+        if (allowedFields.includes(key) && updates[key] && updates[key] !== req.user[key]) {
+            filteredUpdates[key] = updates[key];
+        }
+    });
+
+    if (Object.keys(filteredUpdates).length === 0) {
+        return res.status(400).json({ success: false, message: "No changes detected." });
+    }
+
+    // 4. Create Request
+    await ProfileUpdateRequest.create({
+        studentId,
+        updates: filteredUpdates,
+        status: 'PENDING'
+    });
+
+    res.status(201).json({ success: true, message: "Update request submitted successfully." });
+
+  } catch (error) {
+    console.error("Profile Request Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
 
 // @desc    Get Single Pass Details (Day or Home)
 // @route   GET /api/student/pass/:id?type=...
@@ -212,12 +302,6 @@ export const getStudentProfile = async (req, res) => {
 };
 
 
-
-// ... existing imports & getStudentDashboard ...
-
-// @desc    Apply for Day Pass
-// @route   POST /api/student/apply/day
-// @access  Private (Student)
 export const applyDayPass = async (req, res) => {
     try {
         const { date, outTime, inTime, destination, reason } = req.body;
@@ -230,13 +314,13 @@ export const applyDayPass = async (req, res) => {
 
         // 2. Fetch System Config
         let config = await SystemConfig.findOne();
-        if (!config) config = await SystemConfig.create({}); // Fallback
+        if (!config) config = await SystemConfig.create({}); 
 
         if (config.emergencyFreeze) {
             return res.status(503).json({ success: false, message: "System is currently frozen. No new passes allowed." });
         }
 
-        // 3. Time Validation (Simple string comparison works for HH:MM in 24hr format)
+        // 3. Time Validation
         if (outTime < config.dayPassStartTime || inTime > config.dayPassEndTime) {
             return res.status(400).json({
                 success: false,
@@ -245,7 +329,6 @@ export const applyDayPass = async (req, res) => {
         }
 
         // 4. Check for existing active passes on that date
-        // (Simplified check: overlap logic can be more complex in production)
         const existingPass = await DayPass.findOne({
             studentId: student._id,
             date: new Date(date),
@@ -262,7 +345,7 @@ export const applyDayPass = async (req, res) => {
         const dayPass = new DayPass({
             studentId: student._id,
             date,
-            expectedOut: new Date(`${date}T${outTime}`), // Combine date & time
+            expectedOut: new Date(`${date}T${outTime}`),
             expectedIn: new Date(`${date}T${inTime}`),
             reason: `${reason} (Dest: ${destination})`,
             status
@@ -273,6 +356,29 @@ export const applyDayPass = async (req, res) => {
         }
 
         await dayPass.save();
+
+        // 6. Send Email Notification
+        // Only run this if student email exists
+        if (student.email) {
+            try {
+                await sendEmail({
+                    email: student.email,
+                    subject: `Day Pass ${status === 'APPROVED' ? 'Approved' : 'Request Submitted'}`,
+                    type: 'DAY_PASS_CREATED', // Matches the if block in sendEmail.js
+                    name: student.name,
+                    passDetails: {
+                        date: new Date(date).toDateString(),
+                        outTime: outTime,
+                        inTime: inTime,
+                        destination: destination,
+                        status: status
+                    }
+                });
+            } catch (emailError) {
+                console.error("Failed to send Day Pass email:", emailError);
+                // Don't fail the request if email fails
+            }
+        }
 
         res.status(201).json({ success: true, message: "Day Pass applied successfully!", data: dayPass });
 

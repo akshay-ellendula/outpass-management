@@ -523,14 +523,13 @@ export const getWardenGuardDetails = async (req, res) => {
 export const updateWardenGuard = async (req, res) => {
   try {
     const guard = await Security.findById(req.params.id);
-    console.log(req.body);
     if (!guard) return res.status(404).json({ success: false, message: "Guard not found" });
 
     const allowed = ["name", "phone", "email", "gateLocation", "shift"];
     Object.keys(req.body).forEach(key => {
-        if(allowed.includes(key)) {guard[key] = req.body[key];
-            console.log(`Updated ${key} to ${req.body[key]}`)
-        };
+      if (allowed.includes(key)) {
+        guard[key] = req.body[key];
+      }
     });
 
     await guard.save();

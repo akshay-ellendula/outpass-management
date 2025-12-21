@@ -1,19 +1,22 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { ArrowLeft, Sun, Info, CheckCircle, Lock } from "lucide-react"; // Using Lucide
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router"; // Ensure react-router-dom
+import { ArrowLeft, Sun, Info, CheckCircle, Lock } from "lucide-react"; 
 import { axiosInstance } from "../../lib/axios";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
 const StudentApplyDayPass = () => {
-  const { user } = useAuth(); // Assume user object has 'isDefaulter'
+  const { user } = useAuth(); 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
+  // Get current date string YYYY-MM-DD
+  const todayStr = new Date().toISOString().split("T")[0];
+
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: todayStr,
     outTime: "",
     inTime: "",
     destination: "",
@@ -21,12 +24,49 @@ const StudentApplyDayPass = () => {
     transport: "Walk"
   });
 
+  // Time Validation Logic
+  const validateTime = (name, value) => {
+    if (name === "outTime" && formData.date === todayStr) {
+      const now = new Date();
+      // Add small buffer (e.g. 5 mins) so users don't get blocked while typing
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      
+      const [inputHours, inputMinutes] = value.split(":").map(Number);
+      
+      if (inputHours < currentHours || (inputHours === currentHours && inputMinutes < currentMinutes)) {
+        toast.error("Out time cannot be in the past!");
+        return false;
+      }
+    }
+    
+    // Validate In Time > Out Time
+    if (name === "inTime" && formData.outTime) {
+       if (value <= formData.outTime) {
+          toast.error("In Time must be after Out Time");
+          return false;
+       }
+    }
+    return true;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Run specific time validation
+    if ((name === "outTime" || name === "inTime") && value) {
+        if(!validateTime(name, value)) return; // Don't update state if invalid
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Final check before submission
+    if(!validateTime("outTime", formData.outTime)) return;
+
     setLoading(true);
 
     try {
@@ -41,21 +81,23 @@ const StudentApplyDayPass = () => {
     }
   };
 
+  // Helper to get minimum selectable time for "Out Time" input
+  const getMinOutTime = () => {
+      if(formData.date === todayStr) {
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, '0');
+          const mm = String(now.getMinutes()).padStart(2, '0');
+          return `${hh}:${mm}`;
+      }
+      return "05:00"; // Default config start time
+  };
+
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
       
-      {/* Navbar Back Button logic is handled by Layout usually, but added here for standalone feel */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link to="/student/dashboard" className="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition text-white">
-            <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-xl font-bold text-slate-800">Apply Day Pass</h1>
-      </div>
-
       {/* Defaulter Banner */}
       {user?.isDefaulter && (
         <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm flex items-start gap-3">
-            {/* <Warning className="text-red-500 w-6 h-6 flex-shrink-0" /> */}
             <div>
                 <h3 className="text-sm font-bold text-red-800 uppercase tracking-wide">Action Blocked</h3>
                 <p className="text-sm text-red-700 mt-1">You are marked as a Defaulter. Contact Warden.</p>
@@ -84,7 +126,7 @@ const StudentApplyDayPass = () => {
                     <input 
                         type="date" 
                         name="date"
-                        min={new Date().toISOString().split("T")[0]}
+                        min={todayStr}
                         value={formData.date}
                         onChange={handleChange}
                         required
@@ -100,18 +142,24 @@ const StudentApplyDayPass = () => {
                         <input 
                             type="time" 
                             name="outTime"
+                            min={getMinOutTime()} // Dynamic Minimum
                             value={formData.outTime}
                             onChange={handleChange}
                             required
                             disabled={user?.isDefaulter}
                             className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                         />
+                        {formData.date === todayStr && (
+                            <p className="text-[10px] text-slate-400 mt-1">Must be later than now ({getMinOutTime()})</p>
+                        )}
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase mb-2">In Time (Max 9PM)</label>
                         <input 
                             type="time" 
                             name="inTime"
+                            max="21:00"
+                            min={formData.outTime} // Cannot be before Out Time
                             value={formData.inTime}
                             onChange={handleChange}
                             required

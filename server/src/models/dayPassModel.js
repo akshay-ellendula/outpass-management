@@ -2,28 +2,29 @@ import mongoose from "mongoose";
 import crypto from 'crypto';
 
 const dayPassSchema = new mongoose.Schema({
-    studentId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: "Student", 
-        required: true 
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Student",
+        required: true
     },
-    reason: { 
-        type: String, 
-        required: true 
+    reason: {
+        type: String,
+        required: true
     },
     date: {
         type: Date,
         required: true,
-        default: Date.now 
+        default: Date.now
     },
 
-    expectedOut: { type: Date }, 
+    expectedOut: { type: Date },
     expectedIn: { type: Date },
 
-    status: { 
-        type: String, 
-        enum: ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'EXPIRED'], 
-        default: 'PENDING' 
+    status: {
+        type: String,
+        // ADD 'CURRENTLY_OUT' HERE 👇
+        enum: ['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'EXPIRED', 'CURRENTLY_OUT', 'CANCELLED', 'PENDING_GUARDIAN', 'PENDING_WARDEN'],
+        default: 'PENDING'
     },
 
     // Warden Approval
@@ -33,7 +34,7 @@ const dayPassSchema = new mongoose.Schema({
     qrCode: { type: String, unique: true, sparse: true },
     actualOutTime: { type: Date },
     actualInTime: { type: Date },
-    
+
     isLate: { type: Boolean, default: false } // Triggers Defaulter if true
 
 }, { timestamps: true });

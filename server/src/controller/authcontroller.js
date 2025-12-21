@@ -40,8 +40,8 @@ export const studentSignin = async (req, res) => {
 
 // Warden Signin
 export const wardenSignin = async (req, res) => {
-    const { wardenId : empId  , password } = req.body;
-    
+    const { wardenId: empId, password } = req.body;
+
     try {
         const warden = await Warden.findOne({ empId });
 
@@ -66,9 +66,10 @@ export const wardenSignin = async (req, res) => {
 
 // Security Signin
 export const securitySignin = async (req, res) => {
-    const { guardId, password } = req.body;
+    const { gateId: guardId, passcode: password } = req.body;
     try {
         const security = await Security.findOne({ guardId });
+        
 
         if (!security || !(await security.matchPassword(password))) {
             return res.status(401).json({ message: 'Invalid credentials' });

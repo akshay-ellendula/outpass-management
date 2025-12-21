@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import wardenRoutes from './routes/wardenRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
+import gateRoutes from './routes/gateRoutes.js';
 
 
 const app = express();
@@ -29,6 +30,8 @@ app.use("/api/auth", authRoutes);       // Login/Logout/Forgot Password
 app.use("/api/admin", adminRoutes);     // Admin creating Wardens
 app.use("/api/warden", wardenRoutes); 
 app.use("/api/student", studentRoutes);
+app.use("/api/gate", gateRoutes);       // Security Guard Gate Operations
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server running at http://localhost:${port}`));

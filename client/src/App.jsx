@@ -46,6 +46,15 @@ import StudentDashboard from "./pages/student/StudentDashboardPage.jsx";
 import StudentApplyHomePass from "./pages/student/StudentApplyHomePass.jsx";
 import StudentApplyDayPass from "./pages/student/StudentApplyDayPass.jsx";
 import StudentPassTicket from "./pages/student/StudentPassTicket";
+import StudentRequestProfileUpdate from "./pages/student/StudentRequestProfileUpdate.jsx";
+import StudentProfilePage from "./pages/student/studentProfilePage.jsx";
+
+
+// Security Pages & components
+import SecurityLayout from "./pages/security/components/SecurityLayout.jsx";
+import SecurityScanPage from "./pages/security/SecurityScanPage.jsx";
+import SecurityLogsPage from "./pages/security/SecurityLogsPage.jsx";
+import SecurityProfilePage from "./pages/security/SecurityProfilePage.jsx";
 
 
 function App() {
@@ -70,6 +79,8 @@ function App() {
             <Route path="/student/apply/home" element={<StudentApplyHomePass />} />
             <Route path="/student/apply/day" element={<StudentApplyDayPass />} /> 
             <Route path="/student/pass/:id" element={<StudentPassTicket />} />
+            <Route path="/student/profile/edit" element={<StudentRequestProfileUpdate />} />
+            <Route path="/student/profile" element={<StudentProfilePage />} />
           </Route>
         </Route>
 
@@ -98,7 +109,13 @@ function App() {
 
         {/* === SECURITY PROTECTED ROUTES === */}
         <Route element={<ProtectedRoute allowedRoles={["security"]} />}>
-          {/* <Route path="/security/dashboard" element={<SecurityDashboard />} /> */}
+          {/* 2. Apply Security Layout (Sidebar + Header) */}
+          <Route element={<SecurityLayout />}>
+            {/* 3. Render specific page inside the Layout's Outlet */}
+            <Route path="/security/dashboard" element={<SecurityScanPage />} />
+            <Route path="/security/logs" element={<SecurityLogsPage />} />
+            <Route path="/security/profile" element={<SecurityProfilePage />} />
+          </Route>
         </Route>
 
         {/* === ADMIN PROTECTED ROUTES === */}
