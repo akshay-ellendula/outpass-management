@@ -1,57 +1,3 @@
-🚀 SMART OUTPASS MANAGEMENT SYSTEM
-========================================================
-
-A comprehensive, role-based web application designed to
-digitalize and streamline the hostel outpass process.
-
-This system replaces manual paperwork with a secure,
-real-time workflow connecting:
-Students, Wardens, Security Guards, and Administrators.
-
---------------------------------------------------------
-🌟 FEATURES
---------------------------------------------------------
-
-🔐 AUTHENTICATION & ROLES
-
-1. Student
-   - Apply for Day / Home passes
-   - View application status
-   - Manage personal profile
-
-2. Warden
-   - Approve or reject pass requests
-   - Manage students
-   - View defaulters (late returns)
-
-3. Security Guard
-   - Scan QR codes / Student IDs
-   - Log entry and exit times
-   - Detect late returns at the gate
-
-4. Admin
-   - Manage Wardens and Security staff
-   - Configure system settings
-   - View analytics and reports
-
---------------------------------------------------------
-🛡️ CORE FUNCTIONALITY
---------------------------------------------------------
-
-- Digital Pass System (QR-code based)
-- Real-time Gate Entry & Exit Logging
-- Automatic Defaulter Detection
-- Email Notifications for approvals/rejections
-- Guardian Email Approval for Home Passes
-
---------------------------------------------------------
-🛠️ TECH STACK
---------------------------------------------------------
-
-FRONTEND (Client)
-- Framework : React (Vite)
-- Styling   : Tailwind CSS
-- Icons     : Lucide React, Phosphor Icons
 # 🚀 Smart Outpass Management System
 
 A comprehensive, role-based web application to digitalize and streamline the hostel outpass process. It connects Students, Wardens, Security Guards, and Administrators in a secure, real-time workflow.
@@ -198,25 +144,6 @@ outpass-management/
   - `GET /api/admin/dashboard-stats`
 
 Refer to `server/src/routes` for the complete route list.
-
----
-
-## Notes & TODOs
-
-- Use a proper logger (winston/pino) and avoid noisy console logs in production
-- Add rate limiting and brute-force protection on auth endpoints
-- Add automated tests for critical flows
-
----
-
-## Contributing
-
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit and push
-4. Open a Pull Request
-
----
 
 ## License
 
