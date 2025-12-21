@@ -5,181 +5,184 @@ import GateLog from "../models/gateLogModel.js";
 import Defaulter from "../models/defaulterModel.js";
 import Security from "../models/securityModel.js";
 import sendEmail from "../utils/sendEmail.js"; // Import Email Utility
-
+import { mongoose } from 'mongoose';
 // @desc    Verify Student & Log Entry/Exit
 // @route   POST /api/gate/verify
+// @desc    Verify Student & Log Entry/Exit (Smart QR Handling)
 export const verifyAndLog = async (req, res) => {
   try {
-    const { regNo, scanType } = req.body; // 'regNo' can be Student ID OR QR Code hash
+    let { regNo, scanType } = req.body; 
     const guardId = req.user._id;
     const gateLocation = req.user.gateLocation || "Main Gate";
 
-    let student = null;
-    let pass = null;
-
     // ============================================================
-    // STEP 1: IDENTIFY STUDENT & FIND PASS
+    // STEP 1: PARSE INPUT (Handle Raw QR JSON)
     // ============================================================
-    
-    // A. Try finding by Registration Number (Manual Input)
-    student = await Student.findOne({ regNo: regNo.toUpperCase() });
+    // If the scanner sends the whole JSON string like: {"id":"694...", "regNo":"S20..."}
+    // We need to extract the 'id' field from it.
 
-    const todayStart = new Date();
-    todayStart.setHours(0,0,0,0);
-    
-    // We look for any relevant status. 
-    // We explicitly exclude REJECTED/CANCELLED to avoid finding dead passes.
-    const validStatuses = ['APPROVED', 'CURRENTLY_OUT', 'COMPLETED'];
-
-    if (student) {
-        // If student found, find their LATEST relevant pass for today
-        // FIX: Added .sort({ createdAt: -1 }) to get the NEWEST pass first
-        // FIX: Added .sort({ updatedAt: -1 }) as secondary sort to get most recently modified
-        pass = await DayPass.findOne({ 
-            studentId: student._id,
-            status: { $in: validStatuses }, 
-            date: { $gte: todayStart }
-        }).sort({ createdAt: -1, updatedAt: -1 }) 
-        || await HomePass.findOne({
-            studentId: student._id,
-            status: { $in: validStatuses },
-            fromDate: { $lte: new Date() },
-            toDate: { $gte: todayStart }
-        }).sort({ createdAt: -1, updatedAt: -1 });
-    } 
-    else {
-        // B. Try finding directly by QR Code (Scanner Input)
-        // Note: QR codes are unique to a specific pass, so sort isn't strictly needed here, 
-        // but good for consistency.
-        pass = await DayPass.findOne({ qrCode: regNo }).populate('studentId') 
-            || await HomePass.findOne({ qrCode: regNo }).populate('studentId');
-
-        if (pass) {
-            student = pass.studentId;
+    if (regNo && regNo.trim().startsWith('{')) {
+        try {
+            const parsedData = JSON.parse(regNo);
+            if (parsedData.id) {
+                regNo = parsedData.id; // Switch to using the ID from the JSON
+            }
+        } catch (e) {
+            console.log("Input was not valid JSON, proceeding as string");
         }
     }
 
     // ============================================================
-    // STEP 2: VALIDATE PASS EXISTENCE
+    // STEP 2: STRICT ID VALIDATION
     // ============================================================
-
-    if (!student || !pass) {
-        // Optional: Log generic denial if student exists but no pass
-        if(student) {
-             await GateLog.create({
-                passId: null,
-                studentId: student._id,
-                guardId,
-                scanType: 'DENIED',
-                gateLocation,
-                comment: 'No valid pass found'
-            });
-        }
-        return res.status(404).json({ success: false, message: "Invalid QR or No Active Pass Found" });
-    }
-
-    // ============================================================
-    // STEP 3: STATUS CHECKS & LOGIC
-    // ============================================================
-
-    // 1. Defaulter Check (Block Exit Only)
-    if (student.isDefaulter && scanType === 'CHECK_OUT') {
-        await GateLog.create({
-            passId: pass._id,
-            studentId: student._id,
-            guardId,
-            scanType: 'DENIED',
-            gateLocation,
-            comment: 'Blocked: Student is Defaulter'
-        });
-        return res.status(403).json({ 
+    
+    // Now check if we have a valid MongoDB ID (Pass ID)
+    if (!mongoose.Types.ObjectId.isValid(regNo)) {
+        return res.status(400).json({ 
             success: false, 
-            message: "BLOCK: Student is a Defaulter.", 
-            student 
+            message: "Invalid Pass ID. Please scan a valid Pass QR Code." 
         });
     }
 
-    let message = "Scan Successful";
-    let isLate = false;
-    let comment = 'Standard';
-    let shouldSendEmail = false;
-    let emailScanStatus = "";
+    // ============================================================
+    // STEP 3: FIND PASS & STUDENT
+    // ============================================================
 
-    // --- CHECK OUT LOGIC ---
+    let pass = await DayPass.findById(regNo).populate('studentId') 
+            || await HomePass.findById(regNo).populate('studentId');
+
+    if (!pass || !pass.studentId) {
+        return res.status(404).json({ success: false, message: "Pass Not Found in Database" });
+    }
+
+    const student = pass.studentId;
+
+    // ============================================================
+    // STEP 4: CHECK OUT LOGIC
+    // ============================================================
+
     if (scanType === 'CHECK_OUT') {
         
-        // Critical Status Checks
+        if (pass.status === 'APPROVED') {
+            
+            // --- CHECK: Is student ALREADY OUT on ANY pass? ---
+            const isAlreadyOut = await DayPass.exists({ studentId: student._id, status: 'CURRENTLY_OUT' }) 
+                              || await HomePass.exists({ studentId: student._id, status: 'CURRENTLY_OUT' });
+
+            if (isAlreadyOut) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "DENIED: Student is already OUT on another pass.",
+                    student
+                });
+            }
+
+            // Process Exit
+            pass.actualOutTime = new Date();
+            pass.status = 'CURRENTLY_OUT'; 
+            await pass.save();
+            
+            await createLog(pass, student, guardId, scanType, gateLocation, "Allowed to Exit");
+            
+            await sendEmail({
+                email: student.parentEmail || student.email,
+                type: 'MOVEMENT_ALERT',
+                name: student.parentName || "Parent",
+                studentName: student.name,
+                subject: `Gate Exit Alert: ${student.name}`,
+                movementDetails: {
+                    status: 'CHECKED OUT',
+                    time: new Date().toLocaleString(),
+                    gate: gateLocation
+                }
+            });
+
+            return sendSuccess(res, "Allowed to Exit", student, pass, scanType);
+        }
+
         if (pass.status === 'CURRENTLY_OUT') {
             return res.status(400).json({ success: false, message: "Student is already OUT", student });
         }
+
         if (pass.status === 'COMPLETED') {
             return res.status(400).json({ success: false, message: "Pass already USED/COMPLETED", student });
         }
-        if (pass.status !== 'APPROVED') {
-             return res.status(400).json({ success: false, message: `Pass status is ${pass.status}`, student });
-        }
 
-        // Apply Update
-        pass.actualOutTime = new Date();
-        pass.status = 'CURRENTLY_OUT';
-        message = "Allowed to Exit";
-        
-        shouldSendEmail = true;
-        emailScanStatus = "CHECKED OUT";
+        return res.status(400).json({ success: false, message: `Invalid Status: ${pass.status}`, student });
     } 
-    
-    // --- CHECK IN LOGIC ---
+
+    // ============================================================
+    // STEP 5: CHECK IN LOGIC
+    // ============================================================
+
     else if (scanType === 'CHECK_IN') {
 
-        if (pass.status === 'COMPLETED') {
-            return res.status(400).json({ success: false, message: "Student already IN (Pass Completed)", student });
-        }
+        let comment = "Returned";
+        let isLate = false;
 
-        // Handle "Missed Exit Scan" (Student is APPROVED but scanning IN)
-        if (pass.status === 'APPROVED') {
+        if (pass.status === 'CURRENTLY_OUT') {
+            // Proceed
+        }
+        else if (pass.status === 'APPROVED') {
             pass.actualOutTime = pass.actualOutTime || new Date(); 
             comment = "Flagged: Missed Exit Scan"; 
         }
+        else if (pass.status === 'COMPLETED') {
+            return res.status(400).json({ success: false, message: "Pass already USED (Student already IN)", student });
+        }
+        else {
+             return res.status(400).json({ success: false, message: `Invalid Status: ${pass.status}`, student });
+        }
 
-        // Apply Update
+        // --- Completion Logic ---
         pass.actualInTime = new Date();
-        pass.status = 'COMPLETED';
-        
-        shouldSendEmail = true;
-        emailScanStatus = "CHECKED IN";
+        pass.status = 'COMPLETED'; 
 
-        // Late Detection
         const deadline = pass.expectedIn || pass.toDate; 
         if (new Date() > new Date(deadline)) {
             isLate = true;
             pass.isLate = true;
-            comment = comment === 'Standard' ? 'Late Entry' : `${comment} & Late`;
-            message = "LATE ENTRY DETECTED";
-
-            // Mark Defaulter
+            comment = comment === "Returned" ? "Late Entry" : `${comment} & Late`;
+            
             student.isDefaulter = true;
             await student.save();
-
-            const existingDefaulter = await Defaulter.findOne({ passId: pass._id });
-            if (!existingDefaulter) {
-                await Defaulter.create({
-                    studentId: student._id,
-                    passId: pass._id,
-                    reason: `Late Return. Deadline: ${new Date(deadline).toLocaleString()}`,
-                    isActive: true
-                });
-            }
-        } else {
-            message = comment.includes('Missed') ? "Allowed (Missed Exit Detected)" : "Welcome Back";
+            
+            await Defaulter.create({
+                studentId: student._id, 
+                passId: pass._id, 
+                reason: "Late Return", 
+                isActive: true
+            });
         }
+
+        await pass.save();
+        await createLog(pass, student, guardId, scanType, gateLocation, comment);
+
+        await sendEmail({
+            email: student.parentEmail || student.email,
+            type: 'MOVEMENT_ALERT',
+            name: student.parentName || "Parent",
+            studentName: student.name,
+            subject: isLate ? `LATE RETURN ALERT: ${student.name}` : `Gate Entry Alert: ${student.name}`,
+            movementDetails: {
+                status: 'CHECKED IN', 
+                time: new Date().toLocaleString(),
+                gate: gateLocation
+            }
+        });
+        
+        return sendSuccess(res, isLate ? "LATE ENTRY DETECTED" : "Welcome Back", student, pass, scanType, isLate);
     }
 
-    // ============================================================
-    // STEP 4: SAVE & NOTIFY
-    // ============================================================
+  } catch (error) {
+    console.error("Verification Error:", error);
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
+  }
+};
 
-    await pass.save();
+// --- Helper Functions ---
 
+async function createLog(pass, student, guardId, scanType, gateLocation, comment) {
     await GateLog.create({
         passId: pass._id,
         studentId: student._id,
@@ -188,43 +191,21 @@ export const verifyAndLog = async (req, res) => {
         gateLocation,
         comment
     });
+}
 
-    if (shouldSendEmail) {
-        const targetEmail = student.parentEmail || student.email;
-        if (targetEmail) {
-            sendEmail({
-                email: targetEmail,
-                subject: `Movement Alert: ${student.name}`,
-                type: 'MOVEMENT_ALERT',
-                name: student.parentName || "Guardian",
-                studentName: student.name,
-                movementDetails: {
-                    status: emailScanStatus,
-                    time: new Date().toLocaleString(),
-                    gate: gateLocation
-                }
-            }).catch(e => console.error("Email fail", e.message));
-        }
-    }
-
-    res.json({ 
-        success: true, 
-        message, 
-        data: { 
+function sendSuccess(res, message, student, pass, scanType, isLate = false) {
+    res.json({
+        success: true,
+        message,
+        data: {
             studentName: student.name,
             regNo: student.regNo,
             scanType,
             isLate,
             passType: pass.expectedIn ? "Day Pass" : "Home Pass"
-        } 
+        }
     });
-
-  } catch (error) {
-    console.error("Verification Error:", error);
-    res.status(500).json({ success: false, message: "Server Error" });
-  }
-};
-
+}
 
 // @desc    Update Guard Personal Details
 // @route   PUT /api/gate/profile

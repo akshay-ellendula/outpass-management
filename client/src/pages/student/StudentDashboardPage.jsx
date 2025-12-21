@@ -42,18 +42,80 @@ const StudentDashboardPage = () => {
   }, []);
 
   // Helper for Status Badge
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "APPROVED":
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Approved</span>;
-      case "REJECTED":
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">Rejected</span>;
-      case "COMPLETED":
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Used</span>;
-      default: // PENDING, PENDING_GUARDIAN, PENDING_WARDEN
-        return <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Pending</span>;
-    }
-  };
+const getStatusBadge = (status) => {
+  const baseClasses = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium";
+
+  switch (status) {
+    // --- ACTIVE / POSITIVE ---
+    case "APPROVED":
+      return (
+        <span className={`${baseClasses} bg-emerald-100 text-emerald-700`}>
+          Approved
+        </span>
+      );
+    case "CURRENTLY_OUT":
+      return (
+        <span className={`${baseClasses} bg-blue-100 text-blue-700`}>
+          Out Now
+        </span>
+      );
+
+    // --- PENDING STAGES ---
+    case "PENDING_GUARDIAN":
+      return (
+        <span className={`${baseClasses} bg-orange-100 text-orange-700`}>
+          Parent Wait
+        </span>
+      );
+    case "PENDING_WARDEN":
+      return (
+        <span className={`${baseClasses} bg-amber-100 text-amber-700`}>
+          Warden Wait
+        </span>
+      );
+    case "PENDING":
+      return (
+        <span className={`${baseClasses} bg-yellow-100 text-yellow-700`}>
+          Pending
+        </span>
+      );
+
+    // --- NEGATIVE / INACTIVE ---
+    case "REJECTED":
+      return (
+        <span className={`${baseClasses} bg-red-100 text-red-700`}>
+          Rejected
+        </span>
+      );
+    case "EXPIRED":
+      return (
+        <span className={`${baseClasses} bg-stone-100 text-stone-600`}>
+          Expired
+        </span>
+      );
+    case "CANCELLED":
+      return (
+        <span className={`${baseClasses} bg-gray-100 text-gray-500`}>
+          Cancelled
+        </span>
+      );
+    
+    // --- HISTORY ---
+    case "COMPLETED":
+      return (
+        <span className={`${baseClasses} bg-slate-100 text-slate-600`}>
+          Returned
+        </span>
+      );
+
+    default:
+      return (
+        <span className={`${baseClasses} bg-gray-100 text-gray-600`}>
+          {status}
+        </span>
+      );
+  }
+};
 
   if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
 

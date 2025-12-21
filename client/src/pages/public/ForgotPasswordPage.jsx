@@ -55,7 +55,6 @@ const ForgotPasswordPage = () => {
 
         <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden relative">
           <div className="h-1.5 w-full bg-blue-600"></div>
-
           <div className="p-8 pt-10">
             {!emailSent ? (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -64,7 +63,7 @@ const ForgotPasswordPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">I am a...</label>
                   <div className="grid grid-cols-4 gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200">
-                    {['student', 'warden', 'security', 'admin'].map((r) => (
+                    {['student', 'warden', 'security'].map((r) => (
                       <button
                         key={r}
                         type="button"

@@ -310,7 +310,6 @@ export const applyDayPass = async (req, res) => {
         if (student.isDefaulter) {
             return res.status(403).json({ success: false, message: "You are blocked from applying passes due to Defaulter status." });
         }
-
         // 2. Fetch System Config
         let config = await SystemConfig.findOne();
         if (!config) config = await SystemConfig.create({}); 
@@ -318,7 +317,6 @@ export const applyDayPass = async (req, res) => {
         if (config.emergencyFreeze) {
             return res.status(503).json({ success: false, message: "System is currently frozen. No new passes allowed." });
         }
-
         // 3. Time Validation
         if (outTime < config.dayPassStartTime || inTime > config.dayPassEndTime) {
             return res.status(400).json({
@@ -326,7 +324,6 @@ export const applyDayPass = async (req, res) => {
                 message: `Timing allowed: ${config.dayPassStartTime} to ${config.dayPassEndTime}`
             });
         }
-
         // 4. Check for existing active passes on that date
         const existingPass = await DayPass.findOne({
             studentId: student._id,
@@ -419,8 +416,7 @@ export const applyHomePass = async (req, res) => {
         const token = homePass.getGuardianToken();
         await homePass.save();
 
-        const approvalLink = `http://localhost:5173/guardian/approve/${token}`; // Frontend Route
-
+        const approvalLink = `https://outpass-management-frontend.vercel.app/guardian/approve/${token}`; // Frontend Route
         try {
             await sendEmail({
                 email: student.parentEmail,
@@ -445,7 +441,6 @@ export const applyHomePass = async (req, res) => {
             await homePass.deleteOne(); // Rollback
             return res.status(500).json({ success: false, message: "Failed to send email. Please try again." });
         }
-
     } catch (error) {
         console.error("Apply Home Pass Error:", error);
         res.status(500).json({ success: false, message: "Server Error" });

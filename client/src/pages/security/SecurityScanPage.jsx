@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Scanner } from "@yudiel/react-qr-scanner"; // Updated Import
+import { Scanner } from "@yudiel/react-qr-scanner"; 
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -25,7 +25,7 @@ const SecurityScanPage = () => {
   // Result Modal State
   const [scanResult, setScanResult] = useState(null); 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [verifying, setVerifying] = useState(false); // To prevent double scans
+  const [verifying, setVerifying] = useState(false); 
 
   // Fetch Dashboard Data
   const fetchDashboard = async () => {
@@ -44,36 +44,48 @@ const SecurityScanPage = () => {
     fetchDashboard();
   }, []);
 
-  // --- QR SCANNER HANDLER ---
+  // --- QR SCANNER HANDLER (FIXED) ---
   const handleScan = async (detectedCodes) => {
+    // Only proceed if codes detected and not currently verifying
     if (detectedCodes && detectedCodes.length > 0 && !verifying) {
-      const rawValue = detectedCodes[0].rawValue; // Extract the raw string value
+      const rawValue = detectedCodes[0].rawValue;
       
-      setIsScanning(false); // Stop scanning immediately
-      setVerifying(true); // Lock scanning
+      // 1. Immediately lock scanning
+      setIsScanning(false); 
+      setVerifying(true); 
       
       try {
-        // 1. Parse QR Data
-        let regNo = rawValue;
-        console.log("Scanned QR Data:", rawValue);
+        let passId = rawValue;
         
-        // Try parsing as JSON (e.g. {"regNo": "S2023..."})
+        console.log("🔍 Scanned Raw Data:", rawValue);
+        
+        // 2. Smart JSON Parsing
+        // We MUST extract 'id' (The Pass MongoID), NOT 'regNo' (Student ID)
         try {
             const parsed = JSON.parse(rawValue);
-            if(parsed.regNo) regNo = parsed.regNo;
+            if (parsed.id) {
+                passId = parsed.id;
+            } else if (parsed._id) {
+                passId = parsed._id;
+            }
         } catch (e) {
-            // It's a plain string, keep as is
+            // Not JSON, treat as raw string (Pass ID)
         }
 
-        if (!regNo) throw new Error("Empty QR Data");
+        // 3. Strict Validation: Must be a 24-char Hex String (MongoID)
+        const isMongoId = /^[0-9a-fA-F]{24}$/.test(passId);
 
-        // 2. Call API
-        await verifyStudent(regNo);
+        if (!passId || !isMongoId) {
+            throw new Error("Invalid QR Format. Expecting Pass ID.");
+        }
+
+        // 4. Call API with the Cleaned Pass ID
+        await verifyStudent(passId);
 
       } catch (err) {
-        toast.error("Invalid QR Code. Please try again.");
-        setIsScanning(true); // Restart scanner if invalid
-        setVerifying(false); // Unlock
+        console.error("Scan Logic Error:", err);
+        toast.error("Invalid QR Code. Please scan a valid Pass.");
+        setVerifying(false); // Unlock to allow retry
       }
     }
   };
@@ -85,15 +97,16 @@ const SecurityScanPage = () => {
   };
 
   // --- API VERIFICATION ---
-  const verifyStudent = async (regNo) => {
+  const verifyStudent = async (passId) => {
     try {
+      // Backend expects 'regNo' field, but we send the Pass ID in it
       const res = await axiosInstance.post("/gate/verify", {
-        regNo: regNo,
+        regNo: passId, 
         scanType: mode
       });
 
       setScanResult({ success: true, ...res.data });
-      setIsModalOpen(true); // Open Confirmation
+      setIsModalOpen(true); 
       fetchDashboard(); 
 
     } catch (error) {
@@ -186,10 +199,10 @@ const SecurityScanPage = () => {
             {recentLogs.map((log) => (
               <div key={log._id} className="p-4 border-b border-slate-50 hover:bg-slate-50 transition flex gap-3 items-start">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 border ${
-                    log.scanType === 'CHECK_OUT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                    log.scanType === 'CHECK_IN' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-red-50 text-red-600 border-red-100'
+                  log.scanType === 'CHECK_OUT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                  log.scanType === 'CHECK_IN' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-red-50 text-red-600 border-red-100'
                 }`}>
-                    {log.scanType === 'CHECK_OUT' ? <ArrowRight className="w-5 h-5" /> : 
+                   {log.scanType === 'CHECK_OUT' ? <ArrowRight className="w-5 h-5" /> : 
                      log.scanType === 'CHECK_IN' ? <ArrowLeft className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                 </div>
                 <div className="flex-1">
@@ -218,11 +231,11 @@ const SecurityScanPage = () => {
             <Scanner
               onScan={handleScan}
               onError={handleError}
-              formats={['qr_code']} // Limit to QR for better performance
+              formats={['qr_code']} 
               components={{
-                audio: false, // Disable default audio
-                onOff: true, // Show flash button if available
-                finder: false // We use our own custom overlay
+                audio: false, 
+                onOff: true, 
+                finder: false 
               }}
               styles={{
                 container: { height: '100%', width: '100%' },
@@ -232,16 +245,13 @@ const SecurityScanPage = () => {
             
             {/* Custom UI Overlay */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-               {/* Scan Box */}
                <div className="w-64 h-64 border-2 border-red-500 relative shadow-[0_0_50px_rgba(239,68,68,0.5)] z-10 rounded-lg">
-                  {/* Laser Line */}
-                  <div className="absolute w-full h-1 bg-red-500 top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_10px_#ef4444]"></div>
-                  
-                  {/* Corner Markers */}
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-red-500 -mt-1 -ml-1"></div>
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-red-500 -mt-1 -mr-1"></div>
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-red-500 -mb-1 -ml-1"></div>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-red-500 -mb-1 -mr-1"></div>
+                 <div className="absolute w-full h-1 bg-red-500 top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_10px_#ef4444]"></div>
+                 
+                 <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-red-500 -mt-1 -ml-1"></div>
+                 <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-red-500 -mt-1 -mr-1"></div>
+                 <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-red-500 -mb-1 -ml-1"></div>
+                 <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-red-500 -mb-1 -mr-1"></div>
                </div>
             </div>
 

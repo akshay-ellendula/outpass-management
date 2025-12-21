@@ -303,13 +303,6 @@ const AdminSettingsPage = () => {
             </div>
           </form>
         )}
-
-        <button 
-          onClick={logout}
-          className="w-full bg-red-50 text-red-600 border border-red-100 font-bold py-2.5 rounded-lg hover:bg-red-100 transition flex items-center justify-center gap-2"
-        >
-          <SignOut size={18} weight="bold" /> Log Out
-        </button>
       </div>
 
     </div>
