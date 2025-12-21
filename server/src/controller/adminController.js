@@ -13,35 +13,21 @@ export const getDashboardStats = async (req, res) => {
   try {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    // 1. Total Students
+    // 1. Basic Counts
     const totalStudents = await Student.countDocuments();
-
-    // 2. Staff Stats (Wardens + Security)
-    const activeWardens = await Warden.countDocuments({ isActive: true });
-    const totalWardens = await Warden.countDocuments();
-    const activeGuards = await Security.countDocuments({ isActive: true });
-    const totalGuards = await Security.countDocuments();
-
-    const activeStaff = activeWardens + activeGuards;
-    const totalStaff = totalWardens + totalGuards;
-
-    // 3. Total Passes Today
-    const dayPassesToday = await DayPass.countDocuments({
-      createdAt: { $gte: todayStart, $lte: todayEnd },
-    });
-    const homePassesToday = await HomePass.countDocuments({
-      createdAt: { $gte: todayStart, $lte: todayEnd },
-    });
+    const activeStaff = (await Warden.countDocuments({ isActive: true })) + (await Security.countDocuments({ isActive: true }));
+    const totalStaff = (await Warden.countDocuments()) + (await Security.countDocuments());
+    
+    const dayPassesToday = await DayPass.countDocuments({ createdAt: { $gte: todayStart, $lte: todayEnd } });
+    const homePassesToday = await HomePass.countDocuments({ createdAt: { $gte: todayStart, $lte: todayEnd } });
     const totalPassesToday = dayPassesToday + homePassesToday;
-
-    // 4. System Alerts (Active Defaulters)
+    
     const activeDefaulters = await Defaulter.countDocuments({ isActive: true });
 
-    // 5. Recent Activity Feed (Using GateLogs)
+    // 2. Recent Activity
     const recentGateLogs = await GateLog.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -52,11 +38,38 @@ export const getDashboardStats = async (req, res) => {
     const formattedLogs = recentGateLogs.map((log) => ({
       _id: log._id,
       type: "GATE_LOG",
-      action: log.scanType, // CHECK_IN, CHECK_OUT, DENIED
-      user: log.guardId ? log.guardId.name : "Unknown Guard",
-      role: "Security",
-      details: `${log.scanType} for ${log.studentId ? log.studentId.name : "Student"}`,
+      action: log.scanType,
+      user: log.studentId ? log.studentId.name : "Unknown",
+      role: "Student",
+      details: `${log.scanType} at ${log.gateLocation}`,
       time: log.createdAt,
+    }));
+
+    // 3. (NEW) Weekly Stats Calculation
+    // Generate dates for the last 7 days
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        return d;
+    }).reverse();
+
+    // Fetch counts for each day in parallel
+    const weeklyStats = await Promise.all(last7Days.map(async (date) => {
+        const start = new Date(date);
+        start.setHours(0,0,0,0);
+        
+        const end = new Date(date);
+        end.setHours(23,59,59,999);
+        
+        const [dayCount, homeCount] = await Promise.all([
+            DayPass.countDocuments({ createdAt: { $gte: start, $lte: end } }),
+            HomePass.countDocuments({ createdAt: { $gte: start, $lte: end } })
+        ]);
+
+        return {
+            day: start.toLocaleDateString('en-US', { weekday: 'short' }), // e.g., "Mon"
+            count: dayCount + homeCount
+        };
     }));
 
     res.status(200).json({
@@ -68,6 +81,7 @@ export const getDashboardStats = async (req, res) => {
         totalPassesToday,
         activeDefaulters,
         recentActivity: formattedLogs,
+        weeklyStats // <--- Added this
       },
     });
   } catch (error) {
@@ -75,6 +89,7 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+// ... rest of the file
 
 // @desc    Get all Wardens
 // @route   GET /api/admin/wardens
