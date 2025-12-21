@@ -46,22 +46,41 @@ const StudentPassTicket = () => {
 
   // --- Configuration Logic ---
 
+  // --- Configuration Logic ---
+
   const getStatusConfig = (status) => {
     switch (status) {
       case 'APPROVED':
         return { bg: 'bg-emerald-600', icon: <CheckCircle className="w-6 h-6" />, text: 'Approved', showQR: true, scanLine: true };
+      
       case 'PENDING':
         return { bg: 'bg-amber-500', icon: <Clock className="w-6 h-6" />, text: 'Pending Approval', showQR: false, locked: true };
+      
       case 'PENDING_GUARDIAN':
         return { bg: 'bg-purple-600', icon: <UserCheck className="w-6 h-6" />, text: 'Waiting for Guardian', showQR: false, locked: true };
+      
       case 'PENDING_WARDEN':
         return { bg: 'bg-blue-600', icon: <ShieldCheck className="w-6 h-6" />, text: 'Waiting for Warden', showQR: false, locked: true };
+      
       case 'REJECTED':
       case 'CANCELLED':
         return { bg: 'bg-red-600', icon: <XCircle className="w-6 h-6" />, text: status === 'CANCELLED' ? 'Cancelled' : 'Rejected', showQR: false, rejected: true };
+      
       case 'COMPLETED':
       case 'EXPIRED':
         return { bg: 'bg-slate-500', icon: <Archive className="w-6 h-6" />, text: 'Pass Used / Expired', showQR: false, used: true };
+      
+      // ✅ FIX: Changed 'OUT' to 'CURRENTLY_OUT' to match your backend data
+      case 'CURRENTLY_OUT': 
+      case 'OUT': // Keeping this as a fallback just in case
+        return { 
+            bg: 'bg-blue-600', 
+            icon: <Clock className="w-6 h-6" />, 
+            text: 'Currently Out', 
+            showQR: true, // This ensures the QR code is visible
+            scanLine: true 
+        };
+        
       default:
         return { bg: 'bg-slate-500', text: status, showQR: false };
     }
