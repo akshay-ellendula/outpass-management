@@ -26,6 +26,56 @@ app.use(cors({
 }));
 
 // --- MOUNT ROUTES ---
+app.use("/", (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>Backend Status</title>
+            <style>
+                body {
+                    margin: 0;
+                    height: 100vh;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-family: Arial, sans-serif;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                }
+                .card {
+                    background: rgba(0,0,0,0.25);
+                    padding: 30px 40px;
+                    border-radius: 12px;
+                    text-align: center;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                }
+                h1 {
+                    margin-bottom: 10px;
+                }
+                p {
+                    font-size: 14px;
+                    opacity: 0.9;
+                }
+                .status {
+                    margin-top: 15px;
+                    font-weight: bold;
+                    color: #4ade80;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <h1>🚀 Smart Outpass Management System</h1>
+                <p>Backend Service Status</p>
+                <div class="status">✅ Running Successfully</div>
+            </div>
+        </body>
+        </html>
+    `);
+});
+
 app.use("/api/auth", authRoutes);       // Login/Logout/Forgot Password
 app.use("/api/admin", adminRoutes);     // Admin creating Wardens
 app.use("/api/warden", wardenRoutes); 
