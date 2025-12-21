@@ -192,102 +192,93 @@ export const generateTokenAndCookie = (res, userId, role) => {
    4. FORGOT / RESET PASSWORD
 ===================================================== */
 
-// Forgot Password
+// ... existing imports
+
+// @desc    Forgot Password
+// @route   POST /api/auth/forgot-password
 export const forgotPassword = async (req, res) => {
-    const { email, role } = req.body;
+  const { email, role } = req.body;
 
-    try {
-        let user;
+  try {
+    let user;
 
-        if (role === 'student') {
-            user = await Student.findOne({ email });
-        } else if (role === 'warden') {
-            user = await Warden.findOne({ email });
-        } else {
-            return res.status(400).json({ message: 'Invalid role specified' });
-        }
-
-        if (!user) {
-            return res.status(404).json({ message: 'No user found with this email' });
-        }
-
-        const resetToken = crypto.randomBytes(20).toString('hex');
-
-        user.resetPasswordToken = crypto
-            .createHash('sha256')
-            .update(resetToken)
-            .digest('hex');
-
-        user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
-
-        await user.save({ validateBeforeSave: false });
-
-        const resetUrl = `http://localhost:5173/resetpassword/${resetToken}`;
-
-        try {
-            await sendEmail({
-                email: user.email,
-                name: user.name,
-                subject: 'Password Reset - Smart Outpass',
-                resetUrl
-            });
-
-            res.status(200).json({
-                success: true,
-                message: 'Reset email sent'
-            });
-        } catch (error) {
-            user.resetPasswordToken = undefined;
-            user.resetPasswordExpire = undefined;
-
-            await user.save({ validateBeforeSave: false });
-
-            res.status(500).json({ message: 'Email could not be sent' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // 1. Find user based on the selected role
+    switch (role) {
+      case 'student':
+        user = await Student.findOne({ email });
+        break;
+      case 'warden':
+        user = await Warden.findOne({ email });
+        break;
+      case 'security':
+        user = await Security.findOne({ email });
+        break;
+      case 'admin':
+        // FIXED: Now searches by email instead of username
+        user = await Admin.findOne({ email: email }); 
+        break;
+      default:
+        return res.status(400).json({ success: false, message: "Invalid role selected" });
     }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: `No ${role} found with that email.` });
+    }
+
+    // 2. Generate Token
+    const resetToken = user.getResetPasswordToken(); 
+    await user.save({ validateBeforeSave: false });
+
+    // 3. Send Email
+    // Ensure frontend route is correct (e.g., /reset-password vs /reset)
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    
+    await sendEmail({
+      email: user.email, 
+      subject: "Password Reset Request",
+      type: "PASSWORD_RESET",
+      name: user.name || user.username || role, // Fallback for Admin who might not have 'name'
+      resetUrl: resetUrl
+    });
+
+    res.status(200).json({ success: true, message: "Email sent" });
+
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
 };
 
-// Reset Password
+// ... existing resetPassword function (Logic is correct)
+
+// @desc    Reset Password
+// @route   PUT /api/auth/reset-password/:token
 export const resetPassword = async (req, res) => {
-    const { password, role } = req.body;
-    const { resetToken } = req.params;
-
     try {
-        const hashedToken = crypto
-            .createHash('sha256')
-            .update(resetToken)
-            .digest('hex');
+        // Hash the token from URL to match database
+        const resetPasswordToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
-        let user;
-
-        const query = {
-            resetPasswordToken: hashedToken,
-            resetPasswordExpire: { $gt: Date.now() }
-        };
-
-        if (role === 'student') {
-            user = await Student.findOne(query);
-        } else if (role === 'warden') {
-            user = await Warden.findOne(query);
-        }
+        // Search in ALL collections for this token (Token is unique enough)
+        let user = await Student.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
+        if (!user) user = await Warden.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
+        if (!user) user = await Security.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
+        if (!user) user = await Admin.findOne({ resetPasswordToken, resetPasswordExpire: { $gt: Date.now() } });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            return res.status(400).json({ success: false, message: "Invalid or Expired Token" });
         }
 
-        user.password = password;
+        // Set new password
+        user.password = req.body.password; // Pre-save hook will hash this
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save();
 
-        res.status(200).json({
-            success: true,
-            message: 'Password updated successfully'
-        });
+        res.status(200).json({ success: true, message: "Password updated successfully" });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("Reset Password Error:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
     }
 };

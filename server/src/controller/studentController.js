@@ -301,7 +301,6 @@ export const getStudentProfile = async (req, res) => {
     }
 };
 
-
 export const applyDayPass = async (req, res) => {
     try {
         const { date, outTime, inTime, destination, reason } = req.body;
@@ -357,15 +356,15 @@ export const applyDayPass = async (req, res) => {
 
         await dayPass.save();
 
-        // 6. Send Email Notification
-        // Only run this if student email exists
-        if (student.email) {
+        // 6. Send Email Notification to PARENT
+        if (student.parentEmail) {
             try {
                 await sendEmail({
-                    email: student.email,
-                    subject: `Day Pass ${status === 'APPROVED' ? 'Approved' : 'Request Submitted'}`,
-                    type: 'DAY_PASS_CREATED', // Matches the if block in sendEmail.js
-                    name: student.name,
+                    email: student.parentEmail, // <--- Send to Parent
+                    subject: `Day Pass Request: ${student.name}`,
+                    type: 'DAY_PASS_PARENT_NOTIFY', // <--- New Template Type
+                    name: student.parentName || "Guardian",
+                    studentName: student.name,
                     passDetails: {
                         date: new Date(date).toDateString(),
                         outTime: outTime,
@@ -375,8 +374,7 @@ export const applyDayPass = async (req, res) => {
                     }
                 });
             } catch (emailError) {
-                console.error("Failed to send Day Pass email:", emailError);
-                // Don't fail the request if email fails
+                console.error("Failed to send Day Pass email to parent:", emailError);
             }
         }
 

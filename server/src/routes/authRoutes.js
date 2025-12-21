@@ -20,7 +20,7 @@ router.post('/adminSignin', adminSignin);
 router.post('/adminSignup', adminSignup); // Keep for setup
 router.post('/logout', logout);
 router.get('/verify', verifyAuth);
-router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resetToken', resetPassword);
+router.post("/forgot-password", forgotPassword);
+router.put("/reset-password/:token", resetPassword);
 
 export default router;

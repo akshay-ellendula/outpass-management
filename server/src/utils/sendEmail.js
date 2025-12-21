@@ -10,8 +10,6 @@ const sendEmail = async (options) => {
         }
     });
 
-    // Removed verbose sending log
-
     let htmlContent = '';
     const commonFooter = `
         <div style="background-color:#F1F5F9; padding:20px; text-align:center; border-top:1px solid #E2E8F0;">
@@ -90,7 +88,7 @@ const sendEmail = async (options) => {
         </html>`;
     }
     // ======================================================
-    // 3. DAY PASS CREATED (Student Notification) <--- THIS WAS MISSING
+    // 3. DAY PASS CREATED (Student Notification)
     // ======================================================
     else if (options.type === 'DAY_PASS_CREATED') {
         const isApproved = options.passDetails.status === 'APPROVED';
@@ -131,7 +129,48 @@ const sendEmail = async (options) => {
         </html>`;
     }
     // ======================================================
-    // 4. PASSWORD RESET (Default Fallback)
+    // 4. DAY PASS NOTIFICATION (Parent View)
+    // ======================================================
+    else if (options.type === 'DAY_PASS_PARENT_NOTIFY') {
+        const isApproved = options.passDetails.status === 'APPROVED';
+        const headerColor = isApproved ? '#059669' : '#D97706';
+        const statusText = isApproved ? 'Pass Approved' : 'Request Submitted';
+
+        htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <body style="margin:0; padding:0; background-color:#F8FAFC; font-family: 'Arial', sans-serif;">
+            <div style="max-width:600px; margin:0 auto; background-color:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 4px 6px rgba(0,0,0,0.1); margin-top: 40px;">
+                <div style="background-color:${headerColor}; padding:30px; text-align:center;">
+                    <h1 style="color:#ffffff; margin:0; font-size:24px; font-weight:bold;">${statusText}</h1>
+                    <p style="color:#ffffff; margin:5px 0 0 0; font-size:14px; opacity:0.9;">Student Day Pass Application</p>
+                </div>
+                
+                <div style="padding:40px 30px;">
+                    <p style="color:#334155; font-size:16px; margin-bottom:20px;">Hi <strong>${options.name}</strong>,</p>
+                    <p style="color:#475569; font-size:15px; margin-bottom:20px;">
+                        Your ward <strong>${options.studentName}</strong> has applied for a Day Pass. Details:
+                    </p>
+                    
+                    <div style="background-color:#F1F5F9; padding:15px; border-radius:8px; border-left: 4px solid ${headerColor}; margin-bottom:30px;">
+                        <p style="margin:5px 0; font-size:14px; color:#475569;"><strong>Date:</strong> ${options.passDetails.date}</p>
+                        <p style="margin:5px 0; font-size:14px; color:#475569;"><strong>Time:</strong> ${options.passDetails.outTime} - ${options.passDetails.inTime}</p>
+                        <p style="margin:5px 0; font-size:14px; color:#475569;"><strong>Destination:</strong> ${options.passDetails.destination}</p>
+                        <p style="margin:5px 0; font-size:14px; color:#475569;"><strong>Status:</strong> <strong>${options.passDetails.status}</strong></p>
+                    </div>
+
+                    ${isApproved ? 
+                        `<p style="color:#059669; font-size:13px; text-align:center; font-weight:bold;">The pass is auto-approved. Student can exit campus.</p>` : 
+                        `<p style="color:#D97706; font-size:13px; text-align:center;">This request is pending warden approval.</p>`
+                    }
+                </div>
+                ${commonFooter}
+            </div>
+        </body>
+        </html>`;
+    }
+    // ======================================================
+    // 5. PASSWORD RESET (Default Fallback)
     // ======================================================
     else {
         htmlContent = `
@@ -164,7 +203,6 @@ const sendEmail = async (options) => {
         };
 
         const info = await transporter.sendMail(message);
-        // Email sent; success logged only on errors to avoid noisy output
     } catch (error) {
         console.error("Error sending email:", error);
     }

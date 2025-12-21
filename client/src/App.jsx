@@ -6,6 +6,8 @@ import { Toaster } from "react-hot-toast";
 //public pages
 import LandingPage from "./pages/homePage/HomePage.jsx";
 import GuardianApprovalPage from "./pages/public/GuardianApprovalPage.jsx";
+import ForgotPasswordPage from "./pages/public/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/public/ResetPasswordPage.jsx";
 
 
 // Login pages
@@ -69,6 +71,8 @@ function App() {
         <Route path="/login/warden" element={<WardenLoginPage />} />
         <Route path="/login/security" element={<SecurityLoginPage />} />
         <Route path="/login/admin" element={<AdminLoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
         {/* === STUDENT PROTECTED ROUTES === */}
         <Route element={<ProtectedRoute allowedRoles={["student"]} />}>

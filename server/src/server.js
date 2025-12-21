@@ -13,7 +13,6 @@ import wardenRoutes from './routes/wardenRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 import gateRoutes from './routes/gateRoutes.js';
 
-
 const app = express();
 connect_Db();
 
@@ -28,9 +27,18 @@ app.use(cors({
     credentials: true
 }));
 
+// --- MOUNT API ROUTES FIRST ---
+// These must come BEFORE the generic "/" handler
+app.use("/api/auth", authRoutes); 
+app.use("/api/admin", adminRoutes);     
+app.use("/api/warden", wardenRoutes); 
+app.use("/api/student", studentRoutes);
+app.use("/api/gate", gateRoutes);       
 
-// --- MOUNT ROUTES ---
-app.use("/", (req, res) => {
+// --- MOUNT LANDING PAGE LAST ---
+// Changed to app.get() to be specific to the home page, 
+// and moved to the bottom so it doesn't intercept API calls.
+app.get("/", (req, res) => {
     res.send(`
         <!DOCTYPE html>
         <html lang="en">
@@ -79,13 +87,6 @@ app.use("/", (req, res) => {
         </html>
     `);
 });
-
-app.use("/api/auth", authRoutes);       // Login/Logout/Forgot Password
-app.use("/api/admin", adminRoutes);     // Admin creating Wardens
-app.use("/api/warden", wardenRoutes); 
-app.use("/api/student", studentRoutes);
-app.use("/api/gate", gateRoutes);       // Security Guard Gate Operations
-
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server running at http://localhost:${port}`));
