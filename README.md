@@ -31,7 +31,7 @@ A comprehensive, role-based web application to digitalize and streamline the hos
 - **Admin** — username: `admin` / password: `admin123`
 - **Warden** — example ID: `WRD-7234` / password: `123456`
 - **Security** — example ID: `SEC-1011` / password: `123456`
-- **Student** — created via Admin (password set by user)
+- **Student** — s20230010079 / 12345678
 
 ---
 
