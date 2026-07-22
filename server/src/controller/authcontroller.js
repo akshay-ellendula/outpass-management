@@ -143,6 +143,7 @@ export const logout = (req, res) => {
     res.clearCookie('jwt', {
         httpOnly: true,
         sameSite: 'strict',
+        partitioned: process.env.NODE_ENV === 'production',
         secure: process.env.NODE_ENV === 'production'
     });
 
@@ -186,6 +187,7 @@ export const generateTokenAndCookie = (res, userId, role) => {
         httpOnly: true,
         secure: isProduction,              // REQUIRED on Vercel
         sameSite: isProduction ? 'none' : 'lax',
+        partitioned: isProduction,         // REQUIRED for cross-site cookies in modern browsers
         maxAge: 7 * 24 * 60 * 60 * 1000
     });
 };
